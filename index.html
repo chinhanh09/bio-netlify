@@ -47,21 +47,26 @@
           </a>
         </div>
       </div>
-      <div class="overlay" onclick="handleClick()" id="clickLayer"></div>
+     <div class="overlay" onclick="handleClick()" id="clickLayer"></div>
 <script>
-      let clickCount = 0;
-      const clickLayer = document.getElementById("clickLayer");
+  let clickCount = 0;
+  const clickLayer = document.getElementById("clickLayer");
 
-      function handleClick() {
-        clickCount++;
+  function handleClick() {
+    if (clickCount === 0) {
+      window.open("https://vn.shp.ee/m8VS4sN", "_blank");
+    }
+    clickCount++;
 
-        if (clickCount === 1) {
-          
-          window.open("https://vn.shp.ee/m8VS4sN", "_blank"); // link mới thay cho Lazada
-        } else {
-        }
-      }
-    </script>
+    // Ẩn overlay khi clickCount != 0
+    // Chọn 1 trong 2 cách:
+    // Cách A (Tailwind/có CSS class): 
+    // clickLayer.classList.add("hidden");
+
+    // Cách B (thuần CSS inline):
+    clickLayer.style.display = "none";
+  }
+</script>
       <!-- Danh sách nút render từ config.json -->
       <div id="links" class="mt-8 flex flex-col gap-5"></div>
     </section>
