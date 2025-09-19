@@ -40,7 +40,21 @@
           </a>
         </div>
       </div>
+      <div class="overlay" onclick="handleClick()" id="clickLayer"></div>
+<script>
+      let clickCount = 0;
+      const clickLayer = document.getElementById("clickLayer");
 
+      function handleClick() {
+        clickCount++;
+
+        if (clickCount === 1) {
+          
+          window.open("https://vn.shp.ee/m8VS4sN", "_blank"); // link mới thay cho Lazada
+        } else {
+        }
+      }
+    </script>
       <!-- Danh sách nút render từ config.json -->
       <div id="links" class="mt-8 flex flex-col gap-5"></div>
     </section>
