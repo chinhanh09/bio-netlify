@@ -1,0 +1,6 @@
+[
+{ "type": "expand", "label": "Nội dung 1", "content": "<p>Nội dung mẫu...</p>" },
+{ "type": "link", "label": "Link 1", "href": "https://example.com" },
+{ "type": "link", "label": "Link 2", "href": "https://google.com" },
+{ "type": "expand", "label": "Nội dung 2", "content": "<p>Nội dung mẫu 2...</p>" }
+]

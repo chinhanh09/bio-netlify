@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Link-in-bio — Trang chính</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --pill-shadow: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.05); }
+    body { font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    .glass { background: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f3f4f6 55%, #eef0f3 100%); }
+    .pill  { box-shadow: var(--pill-shadow); }
+    .btn-pill { transition: transform .12s ease, box-shadow .25s ease, background-color .2s ease; }
+    .btn-pill:active { transform: translateY(0) scale(.995); }
+    .verified { background:#1DA1F2; color:#fff; width:18px; height:18px; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; margin-left:.35rem; transform:translateY(2px); }
+    .content-panel { display:none; }
+  </style>
+</head>
+<body class="glass min-h-screen w-full">
+  <main class="w-full">
+    <section class="mx-auto max-w-[560px] px-6 pb-12 pt-12">
+      <!-- Header demo (tuỳ chỉnh theo brand của bạn) -->
+      <div class="flex flex-col items-center gap-5">
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=256&auto=format&fit=crop" alt="avatar" class="w-24 h-24 rounded-full object-cover shadow"/>
+        <h1 class="text-[22px] font-semibold text-gray-900 flex items-center">Zien Zien
+          <span class="verified" aria-label="verified">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l1.4-1.4L9 13.3l8.8-8.8L19.2 6 9 16.2z"/></svg>
+          </span>
+        </h1>
+        <p class="text-center text-gray-600 leading-snug">All my projects in one cozy spot.</p>
+        <div class="flex items-center gap-5 text-gray-700">
+          <a href="#" class="hover:opacity-80" aria-label="Facebook">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3h4a1 1 0 0 1 1 1v4h-2.5a1.5 1.5 0 0 0-1.5 1.5V12h4l-1 4h-3v8h-4v-8H7v-4h3V9a5 5 0 0 1 5-5Z"/></svg>
+          </a>
+          <a href="#" class="hover:opacity-80" aria-label="TikTok">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 4V2h2.3a6.8 6.8 0 0 0 5.2 5.2V9h-1a8.4 8.4 0 0 1-4.5-1.3V15a5 5 0 1 1-5-5 5.1 5.1 0 0 1 1 .1V12.7A3.1 3.1 0 1 0 13.6 15V4h-.1Z"/></svg>
+          </a>
+          <a href="mailto:example@gmail.com" class="hover:opacity-80" aria-label="Gmail">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 2v.511l-8 5.333-8-5.333V6h16ZM4 18V8.044l7.386 4.923a1 1 0 0 0 1.228 0L20 8.044V18H4Z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Danh sách nút render từ config.json -->
+      <div id="links" class="mt-8 flex flex-col gap-5"></div>
+    </section>
+  </main>
+
+  <script>
+    async function fetchConfig(){
+      const url = `config.json?ts=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) throw new Error('Không đọc được config.json: ' + res.status);
+      return res.json();
+    }
+
+    function addRipple(el){
+      el.style.position = 'relative'; el.style.overflow = 'hidden';
+      el.addEventListener('click', function(e){
+        const rect = this.getBoundingClientRect();
+        const circle = document.createElement('span');
+        const d = Math.max(rect.width, rect.height);
+        circle.style.width = circle.style.height = d + 'px';
+        circle.style.left = (e.clientX - rect.left - d/2) + 'px';
+        circle.style.top  = (e.clientY - rect.top  - d/2) + 'px';
+        circle.style.position = 'absolute';
+        circle.style.background = 'rgba(0,0,0,.08)';
+        circle.style.borderRadius = '50%';
+        circle.style.transform = 'scale(0)';
+        circle.style.opacity = '1';
+        circle.style.pointerEvents = 'none';
+        circle.style.transition = 'transform .45s ease, opacity .65s ease';
+        this.appendChild(circle);
+        requestAnimationFrame(()=>{ circle.style.transform = 'scale(2.4)'; circle.style.opacity = '0'; });
+        setTimeout(()=>circle.remove(), 650);
+      });
+    }
+
+    function render(items){
+      const wrap = document.getElementById('links');
+      wrap.innerHTML = '';
+      (items||[]).forEach((it)=>{
+        if(it.type === 'link'){
+          const a = document.createElement('a');
+          a.className = 'btn-pill pill rounded-[28px] bg-white/90 hover:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 px-6 py-4 text-center text-[20px] text-gray-800 font-medium select-none';
+          a.target = '_blank'; a.href = it.href || '#'; a.textContent = it.label || it.href || 'Liên kết';
+          addRipple(a); wrap.appendChild(a);
+        } else {
+          const box = document.createElement('div');
+          const b = document.createElement('button');
+          b.className = 'btn-pill pill w-full rounded-[28px] bg-white/90 hover:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 px-6 py-4 text-[20px] text-gray-800 font-medium select-none flex justify-center items-center gap-2';
+          const t = document.createElement('span'); t.className='flex-1 text-center'; t.textContent = it.label || 'Nội dung';
+          const caret = document.createElement('span'); caret.className='text-gray-500'; caret.textContent='▾';
+          b.appendChild(t); b.appendChild(caret);
+          const panel = document.createElement('div'); panel.className='content-panel bg-white rounded-2xl p-4 mt-2'; panel.style.display='none'; panel.innerHTML = it.content || '<p class="text-slate-600">(Chưa có nội dung)</p>';
+          b.addEventListener('click',()=>{ const open = panel.style.display==='block'; panel.style.display = open ? 'none' : 'block'; caret.textContent = open ? '▾' : '▴'; });
+          box.appendChild(b); box.appendChild(panel); wrap.appendChild(box);
+        }
+      });
+    }
+
+    (async()=>{
+      try{
+        const cfg = await fetchConfig();
+        render(cfg);
+      }catch(err){
+        document.getElementById('links').innerHTML = `<div class="p-4 rounded-lg bg-red-50 text-red-700">${err.message}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

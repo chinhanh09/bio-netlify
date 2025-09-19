@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Link-in-bio — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--shadow:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -2px rgba(0,0,0,.06)}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial}
+    .card{box-shadow:var(--shadow)}
+    textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .pill{box-shadow:var(--shadow)}
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+  <header class="bg-white border-b sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <h1 class="text-lg md:text-xl font-semibold">⚙️ Link-in-bio — Trang quản trị</h1>
+      <nav class="flex items-center gap-2">
+        <button id="btnLoad" class="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Đọc config.json</button>
+        <button id="btnDownload" class="px-3 py-2 rounded-md bg-slate-700 text-white hover:bg-black">Tải xuống config.json</button>
+        <button id="btnSaveFn" class="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700" title="Yêu cầu bật Netlify Function save-config">Lưu qua Netlify Function</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Form -->
+    <section class="bg-white card rounded-xl p-5">
+      <h2 class="text-lg font-semibold mb-4">🛠️ Thêm / Sửa nút</h2>
+      <form id="form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm text-slate-600">Loại</span>
+          <select id="type" class="border rounded-md px-3 py-2">
+            <option value="expand">Mở rộng nội dung</option>
+            <option value="link">Liên kết (href)</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm text-slate-600">Tiêu đề (label)</span>
+          <input id="label" class="border rounded-md px-3 py-2" placeholder="Ví dụ: Hướng dẫn xem link"/>
+        </label>
+        <label id="wrapHref" class="flex flex-col gap-1 md:col-span-2">
+          <span class="text-sm text-slate-600">Đường dẫn (href) — cho Liên kết</span>
+          <input id="href" class="border rounded-md px-3 py-2" placeholder="https://..."/>
+        </label>
+        <label id="wrapContent" class="flex flex-col gap-1 md:col-span-2">
+          <span class="text-sm text-slate-600">Nội dung mở rộng (HTML)</span>
+          <textarea id="content" rows="6" class="border rounded-md px-3 py-2" placeholder="<p>Nội dung hiển thị khi mở rộng...</p>"></textarea>
+        </label>
+        <div class="md:col-span-2 flex items-center gap-2">
+          <button type="button" id="btnAddUpdate" class="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700">Thêm / Cập nhật</button>
+          <button type="reset" id="btnResetForm" class="px-4 py-2 rounded-md border">Xoá input</button>
+          <span id="editTag" class="text-sm text-slate-500 hidden">Đang chỉnh mục #<span id="editIdx">-</span></span>
+        </div>
+      </form>
+
+      <div class="mt-6 flex items-center gap-2">
+        <button id="btnAddExpand" class="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700">+ Thêm nút mở rộng</button>
+        <button id="btnAddLink" class="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">+ Thêm nút liên kết</button>
+      </div>
+    </section>
+
+    <!-- List -->
+    <section class="bg-white card rounded-xl p-5">
+      <h2 class="text-lg font-semibold mb-4">📋 Danh sách nút</h2>
+      <div id="list" class="flex flex-col gap-3"></div>
+    </section>
+
+    <!-- Export / Preview -->
+    <section class="bg-white card rounded-xl p-5 lg:col-span-2">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <h2 class="text-lg font-semibold">⬇️ JSON hiện tại</h2>
+        <div class="flex gap-2">
+          <button id="btnCopyJSON" class="px-3 py-2 rounded-md border">Copy JSON</button>
+        </div>
+      </div>
+      <textarea id="output" rows="12" class="w-full border rounded-md p-3" placeholder="JSON sẽ xuất hiện ở đây..."></textarea>
+    </section>
+
+    <section class="bg-white card rounded-xl p-5 lg:col-span-2">
+      <h2 class="text-lg font-semibold mb-4">👀 Xem trước</h2>
+      <div id="preview" class="max-w-[560px]"></div>
+    </section>
+  </main>
+
+  <template id="tplListItem">
+    <div class="border rounded-lg p-3 flex items-center gap-3">
+      <div class="text-xs px-2 py-1 rounded bg-slate-100" data-role="type">expand</div>
+      <div class="font-medium flex-1 truncate" data-role="label">Nhãn</div>
+      <button data-role="up" class="px-2 py-1 rounded border">↑</button>
+      <button data-role="down" class="px-2 py-1 rounded border">↓</button>
+      <button data-role="edit" class="px-2 py-1 rounded bg-indigo-600 text-white">Sửa</button>
+      <button data-role="del" class="px-2 py-1 rounded bg-red-600 text-white">Xoá</button>
+    </div>
+  </template>
+
+  <template id="tplPrevLink">
+    <a class="pill block rounded-[28px] bg-white/90 hover:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 px-6 py-4 text-center text-[20px] text-gray-800 font-medium select-none mb-4" target="_blank">Nhãn</a>
+  </template>
+  <template id="tplPrevExpand">
+    <div class="mb-4">
+      <button class="pill w-full rounded-[28px] bg-white/90 hover:bg-white focus:outline-none focus:ring-4 focus:ring-black/5 px-6 py-4 text-[20px] text-gray-800 font-medium select-none flex justify-center items-center gap-2"> <span class="flex-1 text-center">Nhãn</span><span class="text-gray-500">▾</span></button>
+      <div class="content hidden bg-white rounded-2xl p-4 mt-2"></div>
+    </div>
+  </template>
+
+  <script>
+    let items = [];
+    let editing = -1;
+
+    const q = sel => document.querySelector(sel);
+    const elType = q('#type');
+    const elLabel = q('#label');
+    const elHref = q('#href');
+    const elContent = q('#content');
+    const wrapHref = q('#wrapHref');
+    const wrapContent = q('#wrapContent');
+
+    function refreshVis(){
+      wrapHref.style.display = (elType.value === 'link') ? 'block' : 'none';
+      wrapContent.style.display = (elType.value === 'expand') ? 'block' : 'none';
+    }
+
+    async function loadConfig(){
+      const res = await fetch(`config.json?ts=${Date.now()}`, { cache: 'no-store' });
+      if(!res.ok) throw new Error('Không đọc được config.json');
+      items = await res.json();
+      renderList(); renderPreview();
+      q('#output').value = JSON.stringify(items, null, 2);
+    }
+
+    function renderList(){
+      const list = q('#list'); list.innerHTML = '';
+      const tpl = q('#tplListItem');
+      items.forEach((it, idx)=>{
+        const frag = tpl.content.cloneNode(true);
+        frag.querySelector('[data-role="type"]').textContent = it.type;
+        frag.querySelector('[data-role="label"]').textContent = it.label || (it.type==='link'? it.href : '');
+        frag.querySelector('[data-role="up"]').onclick = ()=>{ if(idx>0){ [items[idx-1],items[idx]]=[items[idx],items[idx-1]]; renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2);} };
+        frag.querySelector('[data-role="down"]').onclick = ()=>{ if(idx<items.length-1){ [items[idx+1],items[idx]]=[items[idx],items[idx+1]]; renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2);} };
+        frag.querySelector('[data-role="edit"]').onclick = ()=>{
+          editing = idx; q('#editTag').classList.remove('hidden'); q('#editIdx').textContent = String(idx+1);
+          elType.value = it.type; elLabel.value = it.label||''; elHref.value = it.href||''; elContent.value = it.content||''; refreshVis();
+        };
+        frag.querySelector('[data-role="del"]').onclick = ()=>{ items.splice(idx,1); renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2); };
+        list.appendChild(frag);
+      });
+    }
+
+    function renderPreview(){
+      const prev = q('#preview'); prev.innerHTML = '';
+      items.forEach(it=>{
+        if(it.type==='link'){
+          const a = q('#tplPrevLink').content.cloneNode(true);
+          const el = a.querySelector('a'); el.textContent = it.label || it.href || 'Liên kết'; el.href = it.href || '#';
+          prev.appendChild(a);
+        } else {
+          const b = q('#tplPrevExpand').content.cloneNode(true);
+          b.querySelector('button span').textContent = it.label || 'Nội dung';
+          const cnt = b.querySelector('.content'); cnt.innerHTML = it.content || '<p class="text-slate-600">(Chưa có nội dung)</p>';
+          const btn = b.querySelector('button'); const caret = b.querySelector('button span:last-child');
+          btn.addEventListener('click',()=>{ const h = cnt.classList.contains('hidden'); cnt.classList.toggle('hidden', !h); caret.textContent = h ? '▴' : '▾'; });
+          prev.appendChild(b);
+        }
+      })
+    }
+
+    q('#btnLoad').onclick = ()=> loadConfig().catch(e=>alert(e.message));
+
+    q('#btnAddExpand').onclick = ()=>{ items.push({type:'expand', label:'Tiêu đề mới', content:'<p>Thêm nội dung...</p>'}); renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2); };
+    q('#btnAddLink').onclick   = ()=>{ items.push({type:'link', label:'Liên kết mới', href:'https://example.com'}); renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2); };
+
+    q('#btnAddUpdate').onclick = ()=>{
+      const obj = { type: elType.value, label: elLabel.value.trim() };
+      if(obj.type==='link') obj.href = elHref.value.trim(); else obj.content = elContent.value;
+      if(editing>=0){ items[editing] = obj; editing=-1; q('#editTag').classList.add('hidden'); }
+      else items.push(obj);
+      q('#form').reset(); elType.value='expand'; refreshVis(); renderList(); renderPreview(); q('#output').value = JSON.stringify(items, null, 2);
+    };
+    q('#btnResetForm').onclick = ()=>{ editing=-1; q('#editTag').classList.add('hidden'); };
+
+    q('#btnCopyJSON').onclick = ()=>{ navigator.clipboard.writeText(JSON.stringify(items, null, 2)); alert('Đã copy JSON!'); };
+
+    // Download file config.json
+    q('#btnDownload').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(items, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'config.json'; a.click(); URL.revokeObjectURL(a.href);
+    };
+
+    // Save via Netlify Function (commit to GitHub)
+    q('#btnSaveFn').onclick = async ()=>{
+      try{
+        const res = await fetch('/.netlify/functions/save-config', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: items })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error||'Lưu thất bại');
+        alert('Đã lưu và tạo commit: ' + (data.commitUrl||''));
+      }catch(err){ alert('Lỗi khi lưu qua Function: '+err.message); }
+    };
+
+    // Init
+    refreshVis();
+    loadConfig().catch(()=>{});
+  </script>
+</body>
+</html>
