@@ -1,12 +1,12 @@
 [
   {
     "type": "expand",
-    "label": "Nội dung 11",
+    "label": "Bài đăng về Resin",
     "content": "<p>Nội dung2 mẫu...</p>"
   },
   {
     "type": "link",
-    "label": "Link 11",
+    "label": "Link sản phẩm 1",
     "href": "https://exampl221e.com"
   },
   {
